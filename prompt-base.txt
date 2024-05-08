@@ -9,4 +9,3 @@ A token is assigned 5 if it is the first token of a location name.
 A token is assigned 6 if it is not the first token of a location name. 
 A token is assigned 7 if it is the first token of any miscellaneous named entity. 
 A token is assigned 8 if it is not the first token of any miscellaneous named entity. 
-Return only the sequence of numbers corresponding to the last input. 

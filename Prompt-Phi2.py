@@ -39,4 +39,7 @@ tokenizer = AutoTokenizer.from_pretrained("microsoft/phi-2")
 
 generator = pipeline('text-generation', model=model, tokenizer=tokenizer)
 
-print(generator(test_prompts[0], max_new_tokens = 300))
+for test_prompt in test_prompts:
+    output = generator(test_prompt, max_new_tokens = 300)
+    output = output[len(test_prompt):]
+    print(output)

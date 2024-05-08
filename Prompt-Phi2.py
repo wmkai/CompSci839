@@ -1,6 +1,8 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 import datasets
+import evaluate
 import random
+import ast
 
 conll2003 = datasets.load_dataset("conll2003")
 
@@ -39,10 +41,23 @@ tokenizer = AutoTokenizer.from_pretrained("microsoft/phi-2")
 
 generator = pipeline('text-generation', model=model, tokenizer=tokenizer)
 
+outputs = []
 for test_prompt in test_prompts:
     output = generator(test_prompt, max_new_tokens = 300)
     output = output[0]['generated_text'][len(test_prompt):]
     output = output[output.index('['):]
     if output.find(']') != -1:
         output = output[:output.find(']')+1]
+    else:
+        output = output + ']'
+    output = ast.literal_eval(output)
+    output = [x.strip() for x in output]
     print(output)
+    outputs.append(output)
+
+metric = evaluate.load_metric("seqeval")
+results = metric.compute(predictions=outputs, references=test_label)
+print("Precision: " + results["overall_precision"])
+print("Recall: " + results["overall_recall"])
+print("f1: " + results["overall_f1"])
+print("Accuracy: " + results["overall_accuracy"])

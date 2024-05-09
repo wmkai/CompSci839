@@ -10,6 +10,7 @@ from pathlib import Path
 import torch
 import shutil
 import argparse
+import os
 
 NER_TAGS = {
     "O": 0,
@@ -94,6 +95,7 @@ def eval_model(trainer, datasets):
 
 
 def main(flags):
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(flags.device)
     print(f"Training model {flags.model} on device {flags.device}")
     torch.cuda.set_device(flags.device)
     conll2003 = datasets.load_dataset("conll2003")

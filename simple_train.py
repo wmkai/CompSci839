@@ -97,7 +97,6 @@ def eval_model(trainer, datasets):
 def main(flags):
     os.environ["CUDA_VISIBLE_DEVICES"] = str(flags.device)
     print(f"Training model {flags.model} on device {flags.device}")
-    torch.cuda.set_device(flags.device)
     conll2003 = datasets.load_dataset("conll2003")
     tokenizer = AutoTokenizer.from_pretrained(
         flags.model, add_prefix_space="microsoft/phi" in flags.model
@@ -168,8 +167,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="bert-base-cased", required=True)
     parser.add_argument("--device", type=int, default=0)
-    parser.add_argument("--train_batch_size", type=int, default=4)
-    parser.add_argument("--eval_batch_size", type=int, default=4)
+    parser.add_argument("--train_batch_size", type=int, default=8)
+    parser.add_argument("--eval_batch_size", type=int, default=8)
     parser.add_argument("--gradient_accumulation_steps", type=int, default=1)
     parser.add_argument("--debug", action="store_true")
     main(parser.parse_args())

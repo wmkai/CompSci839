@@ -1,0 +1,5 @@
+transformers==4.40.2
+datasets==2.19.1
+seqeval==1.2.2
+tensorboardX==2.6.2.2
+accelerate==0.30.0

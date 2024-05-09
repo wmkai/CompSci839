@@ -11,6 +11,19 @@ import torch
 import shutil
 import argparse
 
+NER_TAGS = {
+    "O": 0,
+    "B-PER": 1,
+    "I-PER": 2,
+    "B-ORG": 3,
+    "I-ORG": 4,
+    "B-LOC": 5,
+    "I-LOC": 6,
+    "B-MISC": 7,
+    "I-MISC": 8,
+}
+LABEL_LIST = [k for k in sorted(NER_TAGS, key=lambda k: NER_TAGS[k])]
+
 
 def tokenize_and_align_labels(examples, tokenizer, label_all_tokens=True):
     tokenized_inputs = tokenizer(
@@ -48,7 +61,7 @@ def tokenize_and_align_labels(examples, tokenizer, label_all_tokens=True):
     return tokenized_inputs
 
 
-def compute_metrics(eval_preds, label_list, metric):
+def compute_metrics(eval_preds, metric):
     pred_logits, labels = eval_preds
 
     pred_logits = np.argmax(pred_logits, axis=2)
@@ -58,7 +71,7 @@ def compute_metrics(eval_preds, label_list, metric):
     # We remove all the values where the label is -100
     predictions = [
         [
-            label_list[eval_preds]
+            LABEL_LIST[eval_preds]
             for (eval_preds, l) in zip(prediction, label)
             if l != -100
         ]
@@ -66,24 +79,25 @@ def compute_metrics(eval_preds, label_list, metric):
     ]
 
     true_labels = [
-        [label_list[l] for (eval_preds, l) in zip(prediction, label) if l != -100]
+        [LABEL_LIST[l] for (eval_preds, l) in zip(prediction, label) if l != -100]
         for prediction, label in zip(pred_logits, labels)
     ]
-    results = metric.compute(predictions=predictions, references=true_labels)
+    return metric.compute(predictions=predictions, references=true_labels)
 
-    return {
-        "precision": results["overall_precision"],
-        "recall": results["overall_recall"],
-        "f1": results["overall_f1"],
-        "accuracy": results["overall_accuracy"],
-    }
+
+def eval_model(trainer, datasets):
+    out = {}
+    for ds_name, ds in datasets.items():
+        results = trainer.predict(ds).metrics
+        for k, v in results.items():
+            out[k.replace("test", ds_name)] = v
+    return out
 
 
 def main(flags):
     print(f"Training model {flags.model} on device {flags.device}")
     torch.cuda.set_device(flags.device)
     conll2003 = datasets.load_dataset("conll2003")
-    label_list = conll2003["train"].features["ner_tags"].feature.names
     tokenizer = AutoTokenizer.from_pretrained(
         flags.model, add_prefix_space="microsoft/phi" in flags.model
     )
@@ -109,9 +123,20 @@ def main(flags):
         num_train_epochs=3,  # num_train_epochs=3,
         report_to="tensorboard",
     )
-    tokenized_datasets = conll2003.map(
-        partial(tokenize_and_align_labels, tokenizer=tokenizer), batched=True
-    )
+    tokenize_fn = partial(tokenize_and_align_labels, tokenizer=tokenizer)
+    tokenized_datasets = conll2003.map(tokenize_fn, batched=True)
+
+    wiki_ner_en = datasets.load_dataset("Babelscape/wikineural", split="test_en")
+    wiki_ner_de = datasets.load_dataset("Babelscape/wikineural", split="test_de")
+    wiki_ner_es = datasets.load_dataset("Babelscape/wikineural", split="test_es")
+
+    eval_datasets = {
+        "conll2003": tokenized_datasets["test"],
+        "wiki_ner_en": wiki_ner_en.map(tokenize_fn, batched=True),
+        "wiki_ner_de": wiki_ner_de.map(tokenize_fn, batched=True),
+        "wiki_ner_es": wiki_ner_es.map(tokenize_fn, batched=True),
+    }
+
     trainer = Trainer(
         model,
         args,
@@ -119,22 +144,21 @@ def main(flags):
         eval_dataset=tokenized_datasets["validation"],
         data_collator=data_collator,
         tokenizer=tokenizer,
-        compute_metrics=partial(compute_metrics, label_list=label_list, metric=metric),
+        compute_metrics=partial(compute_metrics, metric=metric),
     )
-    zero_shot_test_res = trainer.predict(tokenized_datasets["test"])
+
+    base_results = eval_model(trainer, eval_datasets)
     print("Base Metrics:")
-    print(json.dumps(zero_shot_test_res.metrics, indent=2, sort_keys=True))
+    print(json.dumps(base_results, indent=2, sort_keys=True))
     trainer.train()
-    test_res = trainer.predict(tokenized_datasets["test"])
+    ft_results = eval_model(trainer, eval_datasets)
     print("Fine-Tuned Metrics:")
-    print(json.dumps(test_res.metrics, indent=2, sort_keys=True))
+    print(json.dumps(ft_results, indent=2, sort_keys=True))
     metric_dir = out_dir.joinpath("metrics")
     metric_dir.mkdir(exist_ok=True)
 
     with metric_dir.joinpath(flags.model.replace("/", "_") + ".json").open("w") as f:
-        json.dump(
-            {"base": test_res.metrics, "fine_tune": zero_shot_test_res.metrics}, f
-        )
+        json.dump({"base": base_results, "fine_tune": ft_results}, f)
 
 
 if __name__ == "__main__":

@@ -157,7 +157,7 @@ def main(flags):
     print(json.dumps(ft_results, indent=2, sort_keys=True))
     metric_dir = Path("metrics")
     metric_dir.mkdir(exist_ok=True)
-
+    print(f"Saving metrics to {metric_dir}")
     with metric_dir.joinpath(flags.model.replace("/", "_") + ".json").open("w") as f:
         json.dump({"base": base_results, "fine_tune": ft_results}, f)
 

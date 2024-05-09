@@ -105,9 +105,7 @@ def main(flags):
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
-    model = AutoModelForTokenClassification.from_pretrained(
-        flags.model, num_labels=9
-    ).to(torch.device(flags.device))
+    model = AutoModelForTokenClassification.from_pretrained(flags.model, num_labels=9)
     data_collator = DataCollatorForTokenClassification(tokenizer)
 
     out_dir = Path("results", flags.model.replace("/", "_"))

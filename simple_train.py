@@ -89,8 +89,7 @@ def eval_model(trainer, datasets):
     out = {}
     for ds_name, ds in datasets.items():
         results = trainer.predict(ds).metrics
-        for k, v in results.items():
-            out[k.replace("test", ds_name)] = v
+        out[ds_name] = {k.replace("test_", ""): v for k, v in results.items()}
     return out
 
 
@@ -136,6 +135,8 @@ def main(flags):
         "wiki_ner_de": wiki_ner_de.map(tokenize_fn, batched=True),
         "wiki_ner_es": wiki_ner_es.map(tokenize_fn, batched=True),
     }
+    if flags.debug:
+        eval_datasets = {k: v.select(range(50)) for k, v in eval_datasets.items()}
 
     trainer = Trainer(
         model,
@@ -168,4 +169,5 @@ if __name__ == "__main__":
     parser.add_argument("--train_batch_size", type=int, default=4)
     parser.add_argument("--eval_batch_size", type=int, default=4)
     parser.add_argument("--gradient_accumulation_steps", type=int, default=1)
+    parser.add_argument("--debug", action="store_true")
     main(parser.parse_args())

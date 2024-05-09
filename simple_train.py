@@ -120,8 +120,7 @@ def main(flags):
         per_device_eval_batch_size=flags.eval_batch_size,
         gradient_accumulation_steps=flags.gradient_accumulation_steps,
         num_train_epochs=3,  # num_train_epochs=3,
-        report_to="tensorboard",
-        fp16=True,
+        report_to="none",
     )
     tokenize_fn = partial(tokenize_and_align_labels, tokenizer=tokenizer)
     tokenized_datasets = conll2003.map(tokenize_fn, batched=True)

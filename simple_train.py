@@ -104,7 +104,9 @@ def main(flags):
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
-    model = AutoModelForTokenClassification.from_pretrained(flags.model, num_labels=9)
+    model = AutoModelForTokenClassification.from_pretrained(
+        flags.model, num_labels=9
+    ).to(torch.device(flags.device))
     data_collator = DataCollatorForTokenClassification(tokenizer)
 
     out_dir = Path("results", flags.model.replace("/", "_"))
@@ -125,15 +127,13 @@ def main(flags):
     tokenize_fn = partial(tokenize_and_align_labels, tokenizer=tokenizer)
     tokenized_datasets = conll2003.map(tokenize_fn, batched=True)
 
-    wiki_ner_en = datasets.load_dataset("Babelscape/wikineural", split="test_en")
-    wiki_ner_de = datasets.load_dataset("Babelscape/wikineural", split="test_de")
-    wiki_ner_es = datasets.load_dataset("Babelscape/wikineural", split="test_es")
+    # wiki_ner_en = datasets.load_dataset("Babelscape/wikineural", split="test_en")
+    # wiki_ner_de = datasets.load_dataset("Babelscape/wikineural", split="test_de")
 
     eval_datasets = {
         "conll2003": tokenized_datasets["test"],
-        "wiki_ner_en": wiki_ner_en.map(tokenize_fn, batched=True),
-        "wiki_ner_de": wiki_ner_de.map(tokenize_fn, batched=True),
-        "wiki_ner_es": wiki_ner_es.map(tokenize_fn, batched=True),
+        # "wiki_ner_en": wiki_ner_en.map(tokenize_fn, batched=True),
+        # "wiki_ner_de": wiki_ner_de.map(tokenize_fn, batched=True),
     }
     if flags.debug:
         eval_datasets = {k: v.select(range(50)) for k, v in eval_datasets.items()}

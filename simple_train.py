@@ -127,16 +127,16 @@ def main(flags):
     tokenize_fn = partial(tokenize_and_align_labels, tokenizer=tokenizer)
     tokenized_datasets = conll2003.map(tokenize_fn, batched=True)
 
-    # wiki_ner_en = datasets.load_dataset("Babelscape/wikineural", split="test_en")
-    # wiki_ner_de = datasets.load_dataset("Babelscape/wikineural", split="test_de")
-
     eval_datasets = {
         "conll2003": tokenized_datasets["test"],
-        # "wiki_ner_en": wiki_ner_en.map(tokenize_fn, batched=True),
-        # "wiki_ner_de": wiki_ner_de.map(tokenize_fn, batched=True),
     }
-    if flags.debug:
-        eval_datasets = {k: v.select(range(50)) for k, v in eval_datasets.items()}
+    for lang in ["en", "de"]:
+        split_name = f"test_{lang}"
+        print(f"Loading {split_name}")
+        if flags.debug:
+            split_name = f"test_{lang}[:50]"
+        ds = datasets.load_dataset("Babelscape/wikineural", split=split_name)
+        eval_datasets[f"wiki_ner_{lang}"] = ds.map(tokenize_fn, batched=True)
 
     trainer = Trainer(
         model,

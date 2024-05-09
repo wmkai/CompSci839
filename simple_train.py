@@ -95,7 +95,6 @@ def eval_model(trainer, datasets):
 
 
 def main(flags):
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(flags.device)
     print(f"Training model {flags.model} on device {flags.device}")
     conll2003 = datasets.load_dataset("conll2003")
     tokenizer = AutoTokenizer.from_pretrained(

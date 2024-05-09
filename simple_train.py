@@ -138,7 +138,7 @@ def main(flags):
             split_name = f"test_{lang}[:50]"
         ds = datasets.load_dataset("Babelscape/wikineural", split=split_name)
         eval_datasets[f"wiki_ner_{lang}"] = ds.map(tokenize_fn, batched=True)
-
+    print(f"Saving to {out_dir}")
     trainer = Trainer(
         model,
         args,
@@ -147,7 +147,6 @@ def main(flags):
         data_collator=data_collator,
         tokenizer=tokenizer,
         compute_metrics=partial(compute_metrics, metric=metric),
-        fp16=True,
     )
 
     base_results = eval_model(trainer, eval_datasets)

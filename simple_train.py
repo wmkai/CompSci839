@@ -107,7 +107,7 @@ def main(flags):
     model = AutoModelForTokenClassification.from_pretrained(flags.model, num_labels=9)
     data_collator = DataCollatorForTokenClassification(tokenizer)
 
-    out_dir = Path("results", flags.model.replace("/", "_"))
+    out_dir = Path(flags.out_dir, flags.model.replace("/", "_"))
     out_dir.mkdir(exist_ok=True, parents=True)
     metric = datasets.load_metric("seqeval")
     args = TrainingArguments(
@@ -171,4 +171,5 @@ if __name__ == "__main__":
     parser.add_argument("--eval_batch_size", type=int, default=8)
     parser.add_argument("--gradient_accumulation_steps", type=int, default=1)
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--out_dir", type=str, default="results")
     main(parser.parse_args())

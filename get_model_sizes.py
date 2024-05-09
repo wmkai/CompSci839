@@ -14,9 +14,7 @@ out = {}
 for k in sorted(models):
     print(f"Checking {k}")
     model = AutoModelForTokenClassification.from_pretrained(k, num_labels=9)
-    out[k.replace("/", "_")] = sum(
-        p.numel() for p in model.parameters() if p.requires_grad
-    )
+    out[k.replace("/", "_")] = sum(p.numel() for p in model.parameters())
 
 import json
 

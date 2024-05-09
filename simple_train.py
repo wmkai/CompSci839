@@ -128,6 +128,8 @@ def main(flags):
     eval_datasets = {
         "conll2003": tokenized_datasets["test"],
     }
+    if flags.debug:
+        eval_datasets["conll2003"] = eval_datasets["conll2003"].select(range(50))
     for lang in ["en", "de"]:
         split_name = f"test_{lang}"
         print(f"Loading {split_name}")

@@ -115,7 +115,7 @@ def main(flags):
         evaluation_strategy="epoch",
         save_strategy="epoch",
         overwrite_output_dir=True,
-        learning_rate=2e-5,
+        learning_rate=1e-4,
         per_device_train_batch_size=flags.train_batch_size,
         per_device_eval_batch_size=flags.eval_batch_size,
         gradient_accumulation_steps=flags.gradient_accumulation_steps,

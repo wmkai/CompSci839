@@ -138,6 +138,8 @@ def main(flags):
         ds = datasets.load_dataset("Babelscape/wikineural", split=split_name)
         eval_datasets[f"wiki_ner_{lang}"] = ds.map(tokenize_fn, batched=True)
     print(f"Saving to {out_dir}")
+    if "t5" in flags.model:
+        model.model_parallel = False
     trainer = Trainer(
         model,
         args,

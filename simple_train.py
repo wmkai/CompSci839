@@ -128,7 +128,10 @@ def main(flags):
     test_res = trainer.predict(tokenized_datasets["test"])
     print("Fine-Tuned Metrics:")
     print(json.dumps(test_res.metrics, indent=2, sort_keys=True))
-    with out_dir.joinpath(flags.model.replace("/", "_") + ".json").open("w") as f:
+    metric_dir = out_dir.joinpath("metrics")
+    metric_dir.mkdir(exist_ok=True)
+
+    with metric_dir.joinpath(flags.model.replace("/", "_") + ".json").open("w") as f:
         json.dump(
             {"base": test_res.metrics, "fine_tune": zero_shot_test_res.metrics}, f
         )

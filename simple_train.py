@@ -146,6 +146,7 @@ def main(flags):
         data_collator=data_collator,
         tokenizer=tokenizer,
         compute_metrics=partial(compute_metrics, metric=metric),
+        fp16=True,
     )
 
     base_results = eval_model(trainer, eval_datasets)
@@ -155,7 +156,7 @@ def main(flags):
     ft_results = eval_model(trainer, eval_datasets)
     print("Fine-Tuned Metrics:")
     print(json.dumps(ft_results, indent=2, sort_keys=True))
-    metric_dir = out_dir.joinpath("metrics")
+    metric_dir = Path("metrics")
     metric_dir.mkdir(exist_ok=True)
 
     with metric_dir.joinpath(flags.model.replace("/", "_") + ".json").open("w") as f:
